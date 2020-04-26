@@ -29,10 +29,6 @@ set(7Z_LZMA_OBJS_C
 	${7Z_ROOT_C}/Util/Lzma/LzmaEnc.o
 )
 
-SET(7Z_7Z_SOURCES_C
-	${7Z_ROOT_C}/Util/7Z/PreComp.c
-)
-
 
 include_directories(${INCLUDE_DIR} ${7Z_ROOT_C}/Util/Lzma ${7Z_ROOT_C})
 
