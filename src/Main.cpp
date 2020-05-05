@@ -29,18 +29,27 @@ int main(int argc, char **argv) {
 
     //return -1;
 
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << "not enough arguments provided\n";
         std::cout << "to successfully run rla, follow this example\n\n";
-        std::cout << "rla [source_directory_of_logs] [target_directory_of_archived_logs]\n";
+        //std::cout << "rla [source_directory_of_logs] [target_directory_of_archived_logs]\n";
+        std::cout << "rla [action] [source_directory_of_logs] [target_directory_of_archived_logs]\n";
         return -1;
     }
 
     std::cout << "starting rla\n";
+    const std::string chosenAction(argv[1]);
+    std::cout << "chosen action: " << chosenAction << "\n";
+    std::cout << "goodbye\n";
 
-    LogArgumentDirectory directories(argv[1], argv[2]);
+    LogArgumentDirectory directories(argv[2], argv[3]);
 
     ArchiveProcess arcProc;
+    auto result = arcProc.isActionValid(chosenAction);
+    if (!result.first) {
+        std::cout << chosenAction << " is an invalid action\n";
+        return -1;
+    }
 
     if (!arcProc.isSourceDirectoryValid(directories)) {
         std::cout << directories.sourceLogDirectory << " is not a valid source directory where logs are contained\n";
@@ -52,7 +61,12 @@ int main(int argc, char **argv) {
     }
 
     auto logs = arcProc.gatherLogs(directories);
+    return -1;
     std::cout << "logs to archive: " << logs.size() << "\n";
+    // TODO: implement way a directory structure is created for the target directory
+    //
+    // TODO: Check to see if a log has already been archived. Wouldn't want to re-archive
+    // a log that already exists
     arcProc.compressLogs(logs, directories);
 
 
