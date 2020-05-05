@@ -1,7 +1,9 @@
 #include "ArchiveProcess.h"
 
 #include <iostream>
+#include <algorithm>
 #include <filesystem>
+#include <cctype>
 
 ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir) {
 }
@@ -28,6 +30,35 @@ std::string ArchiveProcess::LOG_EXT() noexcept {
     return ".log";
 }
 
+std::pair<bool, ArchiveProcess::ACTIONS> ArchiveProcess::isActionValid(const std::string &action) {
+    std::string lowerCaseAction(action);
+    std::for_each(lowerCaseAction.begin(), lowerCaseAction.end(), [](char &c) {
+        if (std::isupper(c))
+            c = std::tolower(c);
+
+        return c;
+    });
+
+    std::cout << "action without alteration: " << action << "\n";
+    std::cout << "action after altercation: " << lowerCaseAction << "\n";
+
+    auto actions = allActions();
+    bool result = false;
+    ACTIONS act = ACTIONS::NONE;
+    for (auto &val : actions) {
+        if (lowerCaseAction.compare(val) == 0) {
+            if (lowerCaseAction.compare(actions[0]) == 0) {
+                act = ACTIONS::SINGLE;
+            } else if (lowerCaseAction.compare(actions[1]) == 0) {
+                act = ACTIONS::ALL;
+            }
+            result = true;
+            break;
+        }
+    }
+
+    return std::pair<bool, ACTIONS>(result, act);
+}
 
 bool ArchiveProcess::isSourceDirectoryValid(LogArgumentDirectory &dir) {
     auto result = (std::filesystem::exists(dir.sourceLogDirectory) && 
