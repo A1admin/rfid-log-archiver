@@ -9,8 +9,10 @@
 #include <sstream>
 #include <iomanip>
 
-ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir) {
-}
+ArchiveProcess::ArchiveProcess() : m_day(-1) { }
+ArchiveProcess::ArchiveProcess(const int day) : m_day(day) { }
+ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir) : m_day(-1) { }
+ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir, const int day) : m_day(day) { }
 
 
 std::vector<RFIDLog> ArchiveProcess::gatherLogs(const LogArgumentDirectory &dir) {
@@ -31,6 +33,10 @@ std::vector<RFIDLog> ArchiveProcess::gatherLogs(const LogArgumentDirectory &dir)
 
 std::string ArchiveProcess::LOG_EXT() noexcept {
     return ".log";
+}
+
+std::string ArchiveProcess::LOG_ARCHIVE_EXT() noexcept {
+    return ".lzma";
 }
 
 std::pair<bool, ArchiveProcess::ACTIONS> ArchiveProcess::isActionValid(const std::string &action) {
@@ -54,6 +60,10 @@ std::pair<bool, ArchiveProcess::ACTIONS> ArchiveProcess::isActionValid(const std
                 act = ACTIONS::SINGLE;
             } else if (lowerCaseAction.compare(actions[1]) == 0) {
                 act = ACTIONS::ALL;
+            } else if (lowerCaseAction.compare(actions[2]) == 0) {
+                act = ACTIONS::SINGLETEST;
+            } else if (lowerCaseAction.compare(actions[3]) == 0) {
+                act = ACTIONS::HELP;
             }
             result = true;
             break;
@@ -136,9 +146,6 @@ SRes ArchiveProcess::encode(ISeqOutStream *outStream, ISeqInStream *inStream, UI
 void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, ArchiveProcess::ACTIONS act) {
     std::vector<RFIDLog> logs;
     
-    auto now = std::chrono::system_clock::now() - std::chrono::hours(24);
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
     std::stringstream ss;
     std::string time("");
     std::string archiveName("RFID-API-");
@@ -146,9 +153,6 @@ void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, Archive
     std::string archivePath(dir.sourceLogDirectory);
     std::string archivePartialName;
     std::string logPathCompressed(dir.targetArchiveDirectory);
-    //archivePath.append("RFID-API-logs_");
-
-    int year, month, day;
 
     switch (act) {
     case ACTIONS::ALL:
@@ -156,78 +160,15 @@ void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, Archive
         break;
     case ACTIONS::SINGLE:
         std::cout << "single action target chosen\n";
-        /**
-        now = std::chrono::system_clock::now() - std::chrono::hours(24 * 120);
-        in_time_t = std::chrono::system_clock::to_time_t(now);
-
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
-        time.assign(ss.str());
-        std::cout << "time: " << time << "\n";
-
-        year = std::atoi(time.substr(0,4).c_str());
-        month = std::atoi(time.substr(5, 2).c_str());
-        day = std::atoi(time.substr(9, 2).c_str());
-
-        std::cout << "year: " << year << "\n";
-        std::cout << "month: " << month << "\n";
-        std::cout << "day: " << day << "\n";
-        // RFID-API-
-        archivePath.append(std::to_string(year));
-        archiveName.append(std::to_string(year));
-        archivePath.append("_");
-        archiveName.append("-");
-        if (month < 10) {
-            archivePath.append("0");
-            archiveName.append("0");
-            archivePath.append(std::to_string(month));
-            archiveName.append(std::to_string(month));
-        } else {
-            archivePath.append(std::to_string(month));
-            archiveName.append(std::to_string(month));
-        }
-
-        archivePath.append("/");
-        archiveName.append("-");
-
-        if (day < 10) {
-            archiveName.append("0");
-            archiveName.append(std::to_string(day));
-        } else {
-            archiveName.append(std::to_string(day));
-        }
-        archivePartialName.assign(archiveName);
-
-        archiveName.append(".log");
-        */
-        //archivePath.append(logName);
-        //archivePath.append(".log");
         archiveName.assign(logName);
-        archiveName.append(".log");
+        archiveName.append(LOG_EXT());
         compressSingleLog(dir, logName);
-        /**
-
-        std::cout << "archive filename: " << archiveName << "\n";
-        archivePath.append(archiveName);
-        std::cout << dir.sourceLogDirectory << "\n";
-        std::cout << "checking to see if this log file exist: " << archivePath << "\n";
-        if (std::filesystem::exists(archivePath)) {
-            std::cout << "log file exist\n";
-        } else {
-            std::cout << "log file does not exist\n";
-        }
-
-        std::cout << "checking to see if archived log file exist\n";
-        //std::cout << dir.targetArchiveDirectory + archivePartialName + ".lzma\n";
-        logPathCompressed.append(archivePartialName);
-        logPathCompressed.append(".lzma");
-        if (std::filesystem::exists(logPathCompressed)) {
-            std::cout << "exists, will not compress\n";
-            return;
-        }
-
-        std::cout << "\nfree to compress the log file into an archive\n";
-        std::cout << "compressed archive path will be: " << logPathCompressed << "\n";
-        */
+        break;
+    case ACTIONS::SINGLETEST:
+        std::cout << "singletest action target chosen\n";
+        archiveName.assign(logName);
+        archiveName.append(LOG_EXT());
+        compressSingleLog(dir, logName);
         break;
     case ACTIONS::NONE:
         std::cout << "not implemented\n";
@@ -243,7 +184,7 @@ void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArg
         std::cout << "compressing log file: " << log.filename << " ";
         std::string outPath(dir.targetArchiveDirectory);
         outPath.append(log.stem);
-        outPath.append(".lzma");
+        outPath.append(LOG_ARCHIVE_EXT());
         std::cout << "archived path will be: " << outPath << "\n";
 
         CFileSeqInStream inStream;
@@ -299,19 +240,12 @@ void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArg
 
 void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const std::string &path) {
     std::string logPath(dir.sourceLogDirectory);
-    std::string outPath(outputLogArchivePath(dir));
+    std::string outPath(outputLogArchiveDirectory(dir));
     logPath.append(path);
-    logPath.append(".log");
-    /**
-    std::string outPath(dir.targetArchiveDirectory);
-    auto date = dateValues();
-    outPath.append(std::to_string(std::get<0>(date)));
-    outPath.append("/");
-    const auto monthStr = monthStringValue(std::get<1>(date));
-    outPath.append(monthStr);
-    outPath.append("/");
-    */
+    logPath.append(LOG_EXT());
+    
     auto logFile = std::filesystem::path(logPath);
+    std::cout << "log to compress " << logFile << "\n";
     if (!std::filesystem::exists(logFile)) {
         std::cout << "cannot compress log file that does not exists\n";
         return;
@@ -324,10 +258,15 @@ void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const st
     }
 
     outPath.append(log.stem);
-    outPath.append(".lzma");
+    outPath.append(LOG_ARCHIVE_EXT());
 
-    std::cout << "log to compress: " << logPath << "\n";
+    //std::cout << "log to compress: " << logPath << "\n";
     std::cout << "output archive path: " << outPath << "\n";
+    std::cout << "checking to see if log has already been compressed...\n";
+    if (std::filesystem::exists(outPath)) {
+        std::cout << "log " << log.filename << " has already been archived\n";
+        return;
+    }
 
     CFileSeqInStream inStream;
     CFileOutStream outStream;
@@ -349,35 +288,23 @@ void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const st
 
     closeFiles(&inStream, &outStream);
     //if (useOutFile) {
-    /**
     if (usingOutFile) {
         File_Close(&outStream.file);
     }
     File_Close(&inStream.file);
-    */
 
     if (res != SZ_OK) {
         std::cout << "something went wrong\n";
     }
-    
-    //RFIDLog log(dir.path().filename().string(), dir.path().string(), dir.path().stem().string());
 }
 
 
 std::string ArchiveProcess::generateLogName() {
     std::string archiveName("RFID-API-");
-    //std::stringstream ss;
-    //std::string time("");
-    auto date = dateValues(-120);
+    auto date = dateValues(m_day);
     int year, month, day;
 
-    //auto now = std::chrono::system_clock::now() - std::chrono::hours(24 * 120);
-    //auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
-    //ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
-    //time.assign(ss.str());
-
-    //year = std::atoi(time.substr(0,4).c_str());
     year = std::get<0>(date);
     month = std::get<1>(date);
     day = std::get<2>(date);
@@ -448,9 +375,9 @@ std::string ArchiveProcess::monthStringValue(const int month) {
     return monthVal;
 }
 
-std::string ArchiveProcess::outputLogArchivePath(const LogArgumentDirectory &dir, bool saveExtension) {
-    std::string logPath(outputLogArchivePathYear(dir));
-    auto date = dateValues(-120);
+std::string ArchiveProcess::outputLogArchiveDirectory(const LogArgumentDirectory &dir) {
+    std::string logPath(outputLogArchiveDirectoryYear(dir));
+    auto date = dateValues(m_day);
     auto monthStr = monthStringValue(std::get<1>(date));
     logPath.append(monthStr);
     logPath.append("/");
@@ -458,14 +385,11 @@ std::string ArchiveProcess::outputLogArchivePath(const LogArgumentDirectory &dir
     return logPath;
 }
 
-std::string ArchiveProcess::outputLogArchivePathYear(const LogArgumentDirectory &dir) {
+std::string ArchiveProcess::outputLogArchiveDirectoryYear(const LogArgumentDirectory &dir) {
     std::string logPartialPath(dir.targetArchiveDirectory);
-    auto date = dateValues(-120);
+    auto date = dateValues(m_day);
     logPartialPath.append(std::to_string(std::get<0>(date)));
     logPartialPath.append("/");
-    //auto monthStr = monthStringValue(std::get<1>(date));
-    //logPartialPath.append(monthStr);
-    //logPartialPath.append("/");
 
     return logPartialPath;
 }
@@ -480,9 +404,13 @@ std::tuple<int, int, int> ArchiveProcess::dateValues(const int days) {
 
     if (days == 0) {
         now = std::chrono::system_clock::now();
-    } else if (days > 0) {
-        now = std::chrono::system_clock::now() - std::chrono::hours(24 * days);
+    } /**else if (days > 0) {
+        now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
     } else if (days < 0) {
+        std::cout << "subtracting\n";
+        now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
+    } */
+    else {
         now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
     }
 
@@ -515,7 +443,6 @@ bool ArchiveProcess::prepareArchive(CFileSeqInStream *inStream, CFileOutStream *
             return false;
         }
 
-        //useOutFile = True;
         if (OutFile_Open(&outStream->file, outputPath.c_str()) != 0) {
             std::cout << "couldn't open output file\n";
             return false;
@@ -526,21 +453,15 @@ bool ArchiveProcess::prepareArchive(CFileSeqInStream *inStream, CFileOutStream *
 
 bool ArchiveProcess::isTargetArchiveDirectoryValid(const LogArgumentDirectory &dir) {
     bool result = false;
-    //auto date = dateValues(-120);
-    //std::string directory(dir.targetArchiveDirectory);
-    std::string directory(outputLogArchivePathYear(dir));
-    //directory.append(std::to_string(std::get<0>(date)));
-    //directory.append("/");
+    std::string directory(outputLogArchiveDirectoryYear(dir));
     std::cout << directory << "\n";
+
     if (!std::filesystem::exists(directory)) {
         std::cout << "year sub-directory does not exist: " << directory << "\n";
         return result;
     }
 
-    //const auto monthStr = monthStringValue(std::get<1>(date));
-    //directory.append(monthStr);
-    //directory.append("/");
-    directory.assign(outputLogArchivePath(dir));
+    directory.assign(outputLogArchiveDirectory(dir));
 
     std::cout << directory << "\n";
     if (!std::filesystem::exists(directory)) {
@@ -568,19 +489,14 @@ void ArchiveProcess::validateDirectories(LogArgumentDirectory &dir) {
 
 void ArchiveProcess::createTargetDirectoryStructure(const LogArgumentDirectory &dir) {
     std::cout << "creating archive directory structure\n";
-    //std::string directory(dir.targetArchiveDirectory);
-    /**
-    auto date = dateValues(-120);
-    directory.append(std::to_string(std::get<0>(date)));
-    directory.append("/");
-    */
-    std::string directory(outputLogArchivePathYear(dir));
+    
+    std::string directory(outputLogArchiveDirectoryYear(dir));
     if (!std::filesystem::exists(directory)) {
         std::cout << "created year sub-directory: " << directory << "\n";
         std::filesystem::create_directory(directory);
     }
 
-    directory.assign(outputLogArchivePath(dir));
+    directory.assign(outputLogArchiveDirectory(dir));
     if (!std::filesystem::exists(directory)) {
         std::cout << "created month sub-directory: " << directory << "\n";
         std::filesystem::create_directory(directory);

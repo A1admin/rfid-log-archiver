@@ -16,38 +16,45 @@ bool isInputValid(const char response) {
     return false;
 }
 
-
+void printHelp() {
+    std::cout << "rla [action] [source_directory_of_logs] [target_directory_of_archived_logs] (days)\n";
+    std::cout << "\nsuported actions\n";
+    std::cout << "* single - compresses single log file from the previous day. If log file does not exist or\n";
+    std::cout << "\tif the comrpessed archive file does exist, nothing will happen\n";
+    std::cout << "* singletest - similar to the single action but the days numerical value is required\n";
+    std::cout << "\ndirectories\n";
+    std::cout << "* [source_directory_of_logs] - root directory in which logs are stored\n";
+    std::cout << "* [target_directory_of_archived_logs] - target directory where archived logs will be stored\n";
+    std::cout <<"\noptional:\n";
+    std::cout << "* days - only required when given the singletest action\n";
+}
 
 
 int main(int argc, char **argv) {
-    //char rs[800] = { 0 };
-    //test(argv[1], argv[2], rs);
-    //test(argc, argv, rs);
-    //std::fputs(rs, stdout);
 
-    //std::cout << "exiting\n";
-
-    //return -1;
-
-    if (argc < 4) {
-        std::cout << "not enough arguments provided\n";
-        std::cout << "to successfully run rla, follow this example\n\n";
-        //std::cout << "rla [source_directory_of_logs] [target_directory_of_archived_logs]\n";
-        std::cout << "rla [action] [source_directory_of_logs] [target_directory_of_archived_logs]\n";
-        return -1;
-    }
-
-    std::cout << "starting rla\n";
     const std::string chosenAction(argv[1]);
-    std::cout << "chosen action: " << chosenAction << "\n";
-    std::cout << "goodbye\n";
-
-    LogArgumentDirectory directories(argv[2], argv[3]);
 
     ArchiveProcess arcProc;
     auto result = arcProc.isActionValid(chosenAction);
     if (!result.first) {
         std::cout << chosenAction << " is an invalid action\n";
+        return -1;
+    }
+    if (result.second == ArchiveProcess::ACTIONS::HELP) {
+        printHelp();
+        return -1;
+    }
+
+    std::cout << "starting rla\n";
+    std::cout << "chosen action: " << chosenAction << "\n";
+
+    LogArgumentDirectory directories(argv[2], argv[3]);
+
+    if (argc < 4) {
+        std::cout << "not enough arguments provided\n";
+        std::cout << "to successfully run rla, follow this example\n\n";
+        std::cout << "rla [action] [source_directory_of_logs] [target_directory_of_archived_logs]\n";
+        std::cout << "**rla help** for more information\n";
         return -1;
     }
 
@@ -60,34 +67,19 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    arcProc.compressLogProcess(directories, result.second);
-    /**
     switch (result.second) {
-        ArchiveProcess::ACTIONS::SINGLE:
-            arcProc.compressLogProcess(directories, )
-            break;
-        ArchiveProcess::ACTIONS::ALL:
-            break;
-        ArchiveProcess::ACTIONS::NONE:
-            std::cout << "no valid action\n";
+    case ArchiveProcess::ACTIONS::SINGLETEST:
+        if (argc < 5) {
+            std::cout << "no days argument provided\nexiting...\n";
             return -1;
-            break;
-        default;
-            std::cout << "no valid action\n";
-            return -1;
-            break;
+        }
+        int daysToAdd = std::atoi(argv[4]);
+        std::cout << daysToAdd << "\n";
+        arcProc = ArchiveProcess(daysToAdd);
+        break;
     }
-    */
 
-    return -1;
-    auto logs = arcProc.gatherLogs(directories);
-    std::cout << "logs to archive: " << logs.size() << "\n";
-    // TODO: implement way a directory structure is created for the target directory
-    //
-    // TODO: Check to see if a log has already been archived. Wouldn't want to re-archive
-    // a log that already exists
-    arcProc.compressLogs(logs, directories);
-
+    arcProc.compressLogProcess(directories, result.second);
 
     return 0;
 }
