@@ -52,14 +52,33 @@ public:
 
     void compressLogProcess(const LogArgumentDirectory &, ACTIONS);
     void compressLogs(const std::vector<RFIDLog> &logs, const LogArgumentDirectory &dir);
+    void compressSingleLog(const LogArgumentDirectory &, const std::string &);
 private:
     SRes encode(ISeqOutStream *out, ISeqInStream *in, UInt64 fileSize, char *rs);
 
+    std::string generateLogName();
+    std::string monthStringValue(const int);
+    // returns the path of the archive log file.
+    // By default the extension is not returned.
+    // pass a true bool value to ensure that the extension
+    // is preserved
+    std::string outputLogArchivePath(const LogArgumentDirectory &, bool = false);
+    std::string outputLogArchivePathYear(const LogArgumentDirectory &);
+
+    // Function retrieves the year, month, and day values;
+    //
+    // paramaeter is how many days you wish to add.
+    // if a negative value was given it will subtract days.
+    // default is 0 days
+    std::tuple<int, int, int> dateValues(const int = 0);
+
     bool prepareArchive(CFileSeqInStream *inStream, CFileOutStream *outStream, const std::string &inputPath, 
         const std::string &outputPath);
+    bool isTargetArchiveDirectoryValid(const LogArgumentDirectory &);
 
     void closeFiles(CFileSeqInStream *inStream, CFileOutStream *outStream, bool usingOutFile = true);
     void validateDirectories(LogArgumentDirectory &dir);
+    void createTargetDirectoryStructure(const LogArgumentDirectory &);
 };
 
 #endif
