@@ -50,6 +50,7 @@ public:
     bool isSourceDirectoryValid(LogArgumentDirectory &dir);
     bool isTargetDirectoryValid(LogArgumentDirectory &dir);
 
+    void compressLogProcess(const LogArgumentDirectory &, ACTIONS);
     void compressLogs(const std::vector<RFIDLog> &logs, const LogArgumentDirectory &dir);
 private:
     SRes encode(ISeqOutStream *out, ISeqInStream *in, UInt64 fileSize, char *rs);

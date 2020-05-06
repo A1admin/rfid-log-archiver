@@ -60,8 +60,27 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    auto logs = arcProc.gatherLogs(directories);
+    arcProc.compressLogProcess(directories, result.second);
+    /**
+    switch (result.second) {
+        ArchiveProcess::ACTIONS::SINGLE:
+            arcProc.compressLogProcess(directories, )
+            break;
+        ArchiveProcess::ACTIONS::ALL:
+            break;
+        ArchiveProcess::ACTIONS::NONE:
+            std::cout << "no valid action\n";
+            return -1;
+            break;
+        default;
+            std::cout << "no valid action\n";
+            return -1;
+            break;
+    }
+    */
+
     return -1;
+    auto logs = arcProc.gatherLogs(directories);
     std::cout << "logs to archive: " << logs.size() << "\n";
     // TODO: implement way a directory structure is created for the target directory
     //
