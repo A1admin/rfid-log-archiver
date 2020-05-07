@@ -3,19 +3,20 @@
 
 #include <string>
 
+template<typename Str>
 class RFIDLog {
 public:
     RFIDLog() = default;
-    RFIDLog(const std::string &filename, const std::string &path) :
+    RFIDLog(const Str &filename, const Str &path) :
         filename(filename), path(path) { }
-    RFIDLog(const std::string &filename, const std::string &path, const std::string &stem) :
+    RFIDLog(const Str &filename, const Str &path, const Str &stem) :
         filename(filename), path(path), stem(stem) { }
 
     ~RFIDLog() = default;
 
-    std::string filename;
-    std::string stem;
-    std::string path;
+    Str filename;
+    Str stem;
+    Str path;
 };
 
 #endif

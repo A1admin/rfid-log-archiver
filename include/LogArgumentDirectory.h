@@ -3,11 +3,12 @@
 
 #include <string>
 
+template<typename Str>
 class LogArgumentDirectory {
 public:
     LogArgumentDirectory() :
         directoriesValidated(false) { }
-    LogArgumentDirectory(const std::string &source, const std::string &target) :
+    LogArgumentDirectory(const Str &source, const Str &target) :
         sourceLogDirectory(source), targetArchiveDirectory(target),
         directoriesValidated(false) { }
     LogArgumentDirectory(const char *source, const char *target) :
@@ -16,9 +17,9 @@ public:
 
     ~LogArgumentDirectory() = default;
 
-    std::string sourceLogDirectory;
+    Str sourceLogDirectory;
     bool sourceValid;
-    std::string targetArchiveDirectory;
+    Str targetArchiveDirectory;
     bool targetValid;
     bool directoriesValidated;
 

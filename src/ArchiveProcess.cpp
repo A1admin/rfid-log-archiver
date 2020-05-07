@@ -11,18 +11,18 @@
 
 ArchiveProcess::ArchiveProcess() : m_day(-1) { }
 ArchiveProcess::ArchiveProcess(const int day) : m_day(day) { }
-ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir) : m_day(-1) { }
-ArchiveProcess::ArchiveProcess(const LogArgumentDirectory &dir, const int day) : m_day(day) { }
+ArchiveProcess::ArchiveProcess(const LogArgumentDirectory<std::string> &dir) : m_day(-1) { }
+ArchiveProcess::ArchiveProcess(const LogArgumentDirectory<std::string> &dir, const int day) : m_day(day) { }
 
 
-std::vector<RFIDLog> ArchiveProcess::gatherLogs(const LogArgumentDirectory &dir) {
-    std::vector<RFIDLog> logs;
+std::vector<RFIDLog<std::string>> ArchiveProcess::gatherLogs(const LogArgumentDirectory<std::string> &dir) {
+    std::vector<RFIDLog<std::string>> logs;
 
     std::cout << "files\n";
     for (auto dir: std::filesystem::directory_iterator(std::filesystem::path(dir.sourceLogDirectory))) {
         const std::string dirPathExtStr = dir.path().extension().string();
         if (dirPathExtStr.compare(LOG_EXT()) == 0) {
-            RFIDLog log(dir.path().filename().string(), dir.path().string(), dir.path().stem().string());
+            RFIDLog<std::string> log(dir.path().filename().string(), dir.path().string(), dir.path().stem().string());
             logs.push_back(log);
         }
     }
@@ -59,10 +59,14 @@ std::pair<bool, ArchiveProcess::ACTIONS> ArchiveProcess::isActionValid(const std
             if (lowerCaseAction.compare(actions[0]) == 0) {
                 act = ACTIONS::SINGLE;
             } else if (lowerCaseAction.compare(actions[1]) == 0) {
-                act = ACTIONS::ALL;
+                act = ACTIONS::SINGLEDEL;
             } else if (lowerCaseAction.compare(actions[2]) == 0) {
-                act = ACTIONS::SINGLETEST;
+                act = ACTIONS::ALL;
             } else if (lowerCaseAction.compare(actions[3]) == 0) {
+                act = ACTIONS::SINGLETEST;
+            } else if (lowerCaseAction.compare(actions[4]) == 0) {
+                act = ACTIONS::SINGLETESTDEL;
+            } else if (lowerCaseAction.compare(actions[5]) == 0) {
                 act = ACTIONS::HELP;
             }
             result = true;
@@ -73,7 +77,7 @@ std::pair<bool, ArchiveProcess::ACTIONS> ArchiveProcess::isActionValid(const std
     return std::pair<bool, ACTIONS>(result, act);
 }
 
-bool ArchiveProcess::isSourceDirectoryValid(LogArgumentDirectory &dir) {
+bool ArchiveProcess::isSourceDirectoryValid(LogArgumentDirectory<std::string> &dir) {
     if (dir.sourceLogDirectory.at(dir.sourceLogDirectory.size() - 1) != '/') {
         dir.sourceLogDirectory.append("/");
     }
@@ -85,7 +89,7 @@ bool ArchiveProcess::isSourceDirectoryValid(LogArgumentDirectory &dir) {
     return result;
 }
 
-bool ArchiveProcess::isTargetDirectoryValid(LogArgumentDirectory &dir) {
+bool ArchiveProcess::isTargetDirectoryValid(LogArgumentDirectory<std::string> &dir) {
     if (dir.targetArchiveDirectory.at(dir.targetArchiveDirectory.size() -1) != '/') {
         dir.targetArchiveDirectory.append("/");
     }
@@ -143,16 +147,11 @@ SRes ArchiveProcess::encode(ISeqOutStream *outStream, ISeqInStream *inStream, UI
 }
 
 
-void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, ArchiveProcess::ACTIONS act) {
-    std::vector<RFIDLog> logs;
+void ArchiveProcess::compressLogProcess(const LogArgumentDirectory<std::string> &dir, ArchiveProcess::ACTIONS act) {
+    std::vector<RFIDLog<std::string>> logs;
     
-    std::stringstream ss;
-    std::string time("");
     std::string archiveName("RFID-API-");
     std::string logName(generateLogName());
-    std::string archivePath(dir.sourceLogDirectory);
-    std::string archivePartialName;
-    std::string logPathCompressed(dir.targetArchiveDirectory);
 
     switch (act) {
     case ACTIONS::ALL:
@@ -160,15 +159,19 @@ void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, Archive
         break;
     case ACTIONS::SINGLE:
         std::cout << "single action target chosen\n";
-        archiveName.assign(logName);
-        archiveName.append(LOG_EXT());
-        compressSingleLog(dir, logName);
+        compressSingleLog(dir);
+        break;
+    case ACTIONS::SINGLEDEL:
+        std::cout << "single delete action target chosen\n";
+        compressSingleLog(dir, true);
         break;
     case ACTIONS::SINGLETEST:
         std::cout << "singletest action target chosen\n";
-        archiveName.assign(logName);
-        archiveName.append(LOG_EXT());
-        compressSingleLog(dir, logName);
+        compressSingleLog(dir);
+        break;
+    case ACTIONS::SINGLETESTDEL:
+        std::cout << "singletest delete action target chosen\n";
+        compressSingleLog(dir, true);
         break;
     case ACTIONS::NONE:
         std::cout << "not implemented\n";
@@ -179,7 +182,7 @@ void ArchiveProcess::compressLogProcess(const LogArgumentDirectory &dir, Archive
 }
 
 
-void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArgumentDirectory &dir) {
+void ArchiveProcess::compressLogs(const std::vector<RFIDLog<std::string>> &logs, const LogArgumentDirectory<std::string> &dir) {
     for (auto &log: logs) {
         std::cout << "compressing log file: " << log.filename << " ";
         std::string outPath(dir.targetArchiveDirectory);
@@ -197,24 +200,6 @@ void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArg
         BoolInt useOutFile = False;
 
         auto usingOutFile = prepareArchive(&inStream, &outStream, log.path, outPath);
-        /**
-        FileSeqInStream_CreateVTable(&inStream);
-        File_Construct(&inStream.file);
-
-        FileOutStream_CreateVTable(&outStream);
-        File_Construct(&outStream.file);
-
-        if (InFile_Open(&inStream.file, log.path.c_str()) != 0) {
-            std::cout << "couldn't open input file\n";
-            return;
-        }
-
-        useOutFile = True;
-        if (OutFile_Open(&outStream.file, outPath.c_str()) != 0) {
-            std::cout << "couldn't open output file\n";
-            return;
-        }
-        */
 
         UInt64 fileSize;
         File_GetLength(&inStream.file, &fileSize);
@@ -224,13 +209,10 @@ void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArg
         std::cout << "encoding process complete\n";
 
         closeFiles(&inStream, &outStream);
-        //if (useOutFile) {
-        /**
         if (usingOutFile) {
             File_Close(&outStream.file);
         }
         File_Close(&inStream.file);
-        */
 
         if (res != SZ_OK) {
             std::cout << "something went wrong\n";
@@ -238,13 +220,10 @@ void ArchiveProcess::compressLogs(const std::vector<RFIDLog> &logs, const LogArg
     }
 }
 
-void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const std::string &path) {
-    std::string logPath(dir.sourceLogDirectory);
-    std::string outPath(outputLogArchiveDirectory(dir));
-    logPath.append(path);
-    logPath.append(LOG_EXT());
-    
+void ArchiveProcess::compressSingleLog(const LogArgumentDirectory<std::string> &dir, const bool deleteLogFile) {
+    const auto logPath = inputLogPath(dir);
     auto logFile = std::filesystem::path(logPath);
+
     std::cout << "log to compress " << logFile << "\n";
     if (!std::filesystem::exists(logFile)) {
         std::cout << "cannot compress log file that does not exists\n";
@@ -252,15 +231,13 @@ void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const st
     }
 
     std::cout << "log file exists... checking to see if directory structure has been created\n";
-    RFIDLog log(logFile.filename().string(), logFile.string(), logFile.stem().string());
+    RFIDLog<std::string> log(logFile.filename().string(), logFile.string(), logFile.stem().string());
     if (!isTargetArchiveDirectoryValid(dir)) {
         createTargetDirectoryStructure(dir);
     }
 
-    outPath.append(log.stem);
-    outPath.append(LOG_ARCHIVE_EXT());
+    const auto outPath = outputLogArchivePath(dir, log);
 
-    //std::cout << "log to compress: " << logPath << "\n";
     std::cout << "output archive path: " << outPath << "\n";
     std::cout << "checking to see if log has already been compressed...\n";
     if (std::filesystem::exists(outPath)) {
@@ -287,15 +264,13 @@ void ArchiveProcess::compressSingleLog(const LogArgumentDirectory &dir, const st
     std::cout << "encoding process complete\n";
 
     closeFiles(&inStream, &outStream);
-    //if (useOutFile) {
-    if (usingOutFile) {
-        File_Close(&outStream.file);
-    }
-    File_Close(&inStream.file);
 
     if (res != SZ_OK) {
         std::cout << "something went wrong\n";
+        return;
     }
+    
+    if (deleteLogFile) this->deleteLogFile(log, outPath);
 }
 
 
@@ -375,7 +350,15 @@ std::string ArchiveProcess::monthStringValue(const int month) {
     return monthVal;
 }
 
-std::string ArchiveProcess::outputLogArchiveDirectory(const LogArgumentDirectory &dir) {
+std::string ArchiveProcess::inputLogPath(const LogArgumentDirectory<std::string> &dir) {
+    std::string logPath(dir.sourceLogDirectory);
+    logPath.append(generateLogName());
+    logPath.append(LOG_EXT());
+
+    return logPath;
+}
+
+std::string ArchiveProcess::outputLogArchiveDirectory(const LogArgumentDirectory<std::string> &dir) {
     std::string logPath(outputLogArchiveDirectoryYear(dir));
     auto date = dateValues(m_day);
     auto monthStr = monthStringValue(std::get<1>(date));
@@ -385,13 +368,22 @@ std::string ArchiveProcess::outputLogArchiveDirectory(const LogArgumentDirectory
     return logPath;
 }
 
-std::string ArchiveProcess::outputLogArchiveDirectoryYear(const LogArgumentDirectory &dir) {
+std::string ArchiveProcess::outputLogArchiveDirectoryYear(const LogArgumentDirectory<std::string> &dir) {
     std::string logPartialPath(dir.targetArchiveDirectory);
     auto date = dateValues(m_day);
     logPartialPath.append(std::to_string(std::get<0>(date)));
     logPartialPath.append("/");
 
     return logPartialPath;
+}
+
+std::string ArchiveProcess::outputLogArchivePath(const LogArgumentDirectory<std::string> &dir, 
+        const RFIDLog<std::string> &log) {
+    std::string outPath(outputLogArchiveDirectory(dir));
+    outPath.append(log.stem);
+    outPath.append(LOG_ARCHIVE_EXT());
+
+    return outPath;
 }
 
 
@@ -404,13 +396,7 @@ std::tuple<int, int, int> ArchiveProcess::dateValues(const int days) {
 
     if (days == 0) {
         now = std::chrono::system_clock::now();
-    } /**else if (days > 0) {
-        now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
-    } else if (days < 0) {
-        std::cout << "subtracting\n";
-        now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
-    } */
-    else {
+    } else {
         now = std::chrono::system_clock::now() + std::chrono::hours(24 * days);
     }
 
@@ -451,7 +437,7 @@ bool ArchiveProcess::prepareArchive(CFileSeqInStream *inStream, CFileOutStream *
     return true;
 }
 
-bool ArchiveProcess::isTargetArchiveDirectoryValid(const LogArgumentDirectory &dir) {
+bool ArchiveProcess::isTargetArchiveDirectoryValid(const LogArgumentDirectory<std::string> &dir) {
     bool result = false;
     std::string directory(outputLogArchiveDirectoryYear(dir));
     std::cout << directory << "\n";
@@ -475,6 +461,15 @@ bool ArchiveProcess::isTargetArchiveDirectoryValid(const LogArgumentDirectory &d
 }
 
 
+void ArchiveProcess::deleteLogFile(const RFIDLog<std::string> &log, const std::string &outPath) {
+    if (std::filesystem::exists(outPath)) {
+        std::cout << "log file successfully archived\n";
+        std::cout << "deleting log file " << log.path << "\n";
+        std::filesystem::remove(std::filesystem::path(log.path));
+    } else {
+        std::cout << "log file " << log.path << " does not exist\n";
+    }
+}
 
 void ArchiveProcess::closeFiles(CFileSeqInStream *inStream, CFileOutStream *outStream, bool usingOutFile) {
     if (usingOutFile) {
@@ -483,11 +478,11 @@ void ArchiveProcess::closeFiles(CFileSeqInStream *inStream, CFileOutStream *outS
     File_Close(&inStream->file);
 }
 
-void ArchiveProcess::validateDirectories(LogArgumentDirectory &dir) {
+void ArchiveProcess::validateDirectories(LogArgumentDirectory<std::string> &dir) {
     dir.directoriesValidated = true;
 }
 
-void ArchiveProcess::createTargetDirectoryStructure(const LogArgumentDirectory &dir) {
+void ArchiveProcess::createTargetDirectoryStructure(const LogArgumentDirectory<std::string> &dir) {
     std::cout << "creating archive directory structure\n";
     
     std::string directory(outputLogArchiveDirectoryYear(dir));
