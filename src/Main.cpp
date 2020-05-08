@@ -1,3 +1,11 @@
+/*
+ * Purpose: rla is a compression and archiving software created to address the 
+ * issue of logs consuming storage space on the server.
+ * 
+ * Writer: Kun Deng
+ * 
+ */
+
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -5,15 +13,6 @@
 #include "ArchiveProcess.h"
 #include "LogArgumentDirectory.h"
 
-// Function returns true if response is y
-// anything else returns false
-bool isInputValid(const char response) {
-    if (std::tolower(response) == 'y') {
-        return true;
-    }
-
-    return false;
-}
 
 void printHelp() {
     std::cout << "rla [action] [source_directory_of_logs] [target_directory_of_archived_logs] (days)\n";
@@ -41,7 +40,9 @@ int main(int argc, char **argv) {
     std::cout << "starting rla\n";
     const std::string chosenAction(argv[1]);
 
-    ArchiveProcess arcProc;
+    // by default the previous day's log is compressed
+    int daysToAdd = -1;
+    ArchiveProcess arcProc(daysToAdd);
     auto result = arcProc.isActionValid(chosenAction);
     if (!result.first) {
         std::cout << chosenAction << " is an invalid action\n";
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    int daysToAdd = -1;
+    // if any of the single test actions are used a day value can be provided
     switch (result.second) {
     case ArchiveProcess::ACTIONS::SINGLETEST:
         if (argc < 5) {
