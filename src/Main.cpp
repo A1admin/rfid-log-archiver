@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    std::cout << "starting rla\n";
+    std::cout << "starting rla 1.0\n";
     const std::string chosenAction(argv[1]);
 
     // by default the previous day's log is compressed
