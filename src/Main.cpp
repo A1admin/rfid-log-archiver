@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
-#include <cctype>
 
 #include "ArchiveProcess.h"
 #include "LogArgumentDirectory.h"
@@ -21,8 +20,10 @@ void printHelp() {
     std::cout << "\nsuported actions\n";
     std::cout << "* single - compresses single log file from the previous day. If log file does not exist or\n";
     std::cout << "\tif the comrpessed archive file does exist, nothing will happen\n";
+    std::cout << "* singledel - similar to the single action but the log file is deleted at the end\n";
     std::cout << "* singletest - similar to the single action but the days numerical value is required\n";
-    std::cout << "\ndirectories\n";
+    std::cout << "\t\tdirectories\n";
+    std::cout << "* singletestdel - similar to the singletest action except the log file is deleted at the end\n\n";
     std::cout << "* [source_directory_of_logs] - root directory in which logs are stored\n";
     std::cout << "* [target_directory_of_archived_logs] - target directory where archived logs will be stored\n";
     std::cout <<"\noptional:\n";
@@ -31,7 +32,13 @@ void printHelp() {
 
 
 int main(int argc, char **argv) {
+    if (argc == 1) {
+        std::cout << "run rla with help to get more information\n";
+        std::cout << "rla help\n";
+        return -1;
+    }
 
+    std::cout << "starting rla\n";
     const std::string chosenAction(argv[1]);
 
     ArchiveProcess arcProc;
@@ -45,10 +52,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    std::cout << "starting rla\n";
     std::cout << "chosen action: " << chosenAction << "\n";
 
-    LogArgumentDirectory directories(argv[2], argv[3]);
+    LogArgumentDirectory<std::string> directories(argv[2], argv[3]);
 
     if (argc < 4) {
         std::cout << "not enough arguments provided\n";
@@ -67,14 +73,24 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    int daysToAdd = -1;
     switch (result.second) {
     case ArchiveProcess::ACTIONS::SINGLETEST:
         if (argc < 5) {
             std::cout << "no days argument provided\nexiting...\n";
             return -1;
         }
-        int daysToAdd = std::atoi(argv[4]);
-        std::cout << daysToAdd << "\n";
+        daysToAdd = std::atoi(argv[4]);
+        std::cout << "days to add: " << daysToAdd << "\n";
+        arcProc = ArchiveProcess(daysToAdd);
+        break;
+    case ArchiveProcess::ACTIONS::SINGLETESTDEL:
+        if (argc < 5) {
+            std::cout << "no days argument provided\nexiting...\n";
+            return -1;
+        }
+        daysToAdd = std::atoi(argv[4]);
+        std::cout << "days to add: " << daysToAdd << "\n";
         arcProc = ArchiveProcess(daysToAdd);
         break;
     }
