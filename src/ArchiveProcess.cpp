@@ -345,6 +345,9 @@ std::string ArchiveProcess::monthStringValue(const int month) {
         case 12:
             monthVal.assign("December");
             break;
+        default:
+            monthVal.assign("January");
+            break;
     }
 
     return monthVal;
@@ -461,6 +464,13 @@ bool ArchiveProcess::isTargetArchiveDirectoryValid(const LogArgumentDirectory<st
 }
 
 
+void ArchiveProcess::closeFiles(CFileSeqInStream *inStream, CFileOutStream *outStream, bool usingOutFile) {
+    if (usingOutFile) {
+        File_Close(&outStream->file);
+    }
+    File_Close(&inStream->file);
+}
+
 void ArchiveProcess::deleteLogFile(const RFIDLog<std::string> &log, const std::string &outPath) {
     if (std::filesystem::exists(outPath)) {
         std::cout << "log file successfully archived\n";
@@ -469,13 +479,6 @@ void ArchiveProcess::deleteLogFile(const RFIDLog<std::string> &log, const std::s
     } else {
         std::cout << "log file " << log.path << " does not exist\n";
     }
-}
-
-void ArchiveProcess::closeFiles(CFileSeqInStream *inStream, CFileOutStream *outStream, bool usingOutFile) {
-    if (usingOutFile) {
-        File_Close(&outStream->file);
-    }
-    File_Close(&inStream->file);
 }
 
 void ArchiveProcess::validateDirectories(LogArgumentDirectory<std::string> &dir) {
