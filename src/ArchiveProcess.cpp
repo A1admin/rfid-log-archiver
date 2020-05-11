@@ -287,7 +287,7 @@ std::string ArchiveProcess::generateLogName() {
 
     archiveName.append("-");
 
-    if (month > 10) {
+    if (month > 9) {
         archiveName.append(std::to_string(month));
     } else {
         archiveName.append("0");
@@ -296,7 +296,7 @@ std::string ArchiveProcess::generateLogName() {
 
     archiveName.append("-");
 
-    if (day > 10) {
+    if (day > 9) {
         archiveName.append(std::to_string(day));
     } else {
         archiveName.append("0");
