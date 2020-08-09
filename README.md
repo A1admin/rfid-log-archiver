@@ -12,23 +12,22 @@ The third option is the most efficient and effective option. Hence, the creation
 
 ## Building
 ### Required for building:
-* Linux OS - Used Ubuntu 18.04 LTS but any Linux Distribution should work)
-* Linux compiler that has c++17 support (I used GCC but Clang is also an option)
-* CMake - Install this via package manager (apt, apt-get, or snap are the available package managers on Ubuntu 18.04 LTS. Any should work)
-* Make - Install this via package manager (apt, apt-get, or snap are the available package managers on Ubuntu 18.04 LTS. Any should work)
-* 7z Lzma SDK - Download the SDK library from the official site (Link provided below in the building section)
+* Windows OS - Used Windows 10
+* C++ Compiler that supports C++ 17 standard - I used Visual Studio 2019
+* CMake
+* 7z Lzma SDK - Download the SDK library from the official site (Link provided below in the building section and included in the 3rdparty directory)
 
 
 ### Getting Started
 You will need to be comfortable with the command line or terminal to compile and run this program
 
 1. Clone the repository ``git clone https://github.com/A1admin/rfid-log-archiver``
-2. Go to the [7zip](https://www.7-zip.org/sdk.html) website and download the latest version of the sdk
+2. Go to the [7zip](https://www.7-zip.org/sdk.html) website and download the latest version of the sdk or use the SDK from the 3rdparty directory
 3. Extract the SDK and change directory to ``C/Util/Lzma`` (**Note**: Not the **Local C Drive** but the directory that was extracted from the archive)
-4. Run ```make -f makefile.gcc``` to build the object files (``filename.o``)
-5. Copy the ``C/`` directory from the compressed file in a location where you can reference it later taking note of the full path
-6. Change directory to rfid-log-archiver
+4. Open Visual Studio and open the project file found within ``C/Util/Lzma``. There maybe a prompt to convert the project to a newer project file, accept, and make sure the target architecture matches what you're building for. Ex. x86 on x86 systems aND X64 for x64 systems. By default it's x86 and needs to be changed to x64
+5. Change the build target from Debug to Release, build, and exit Visual Studio once complete
+6. Change directory to the root directory for rfid-log-archiver from powershell
 7. Run ```mkdir build; cd build```
-8. Run cmake ```cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8 -D7Z_ROOT_C=/path/to/library```
-9. Run make ```make```
+8. Run cmake ```cmake .. -D7Z_ROOT_C=/path/to/library```
+9. Run make ```msbuild /p:Configuration=Release /m:4 rla.vcxproj```
 10. Run rla ```rla help```
