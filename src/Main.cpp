@@ -2,7 +2,8 @@
  * Purpose: rla is a compression and archiving software created to address the 
  * issue of logs consuming storage space on the server.
  * 
- * Writer: Kun Deng
+ * Written by Kun Deng
+ * A1-1 Roof Trusses
  * 
  */
 
@@ -12,6 +13,10 @@
 
 #include "ArchiveProcess.h"
 #include "LogArgumentDirectory.h"
+
+
+// When making changes, modify this variable to indicate the software version
+constexpr auto SOFTWARE_VERSION = "1.2";
 
 
 void printHelp() {
@@ -37,17 +42,19 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    std::cout << "starting rla 1.1\n";
+    std::cout << "starting rla " << SOFTWARE_VERSION << "\n";
     const std::string chosenAction(argv[1]);
 
     // by default the previous day's log is compressed
     int daysToAdd = -1;
     ArchiveProcess arcProc(daysToAdd);
     auto result = arcProc.isActionValid(chosenAction);
+
     if (!result.first) {
         std::cout << chosenAction << " is an invalid action\n";
         return -1;
     }
+
     if (result.second == ArchiveProcess::ACTIONS::HELP) {
         printHelp();
         return -1;

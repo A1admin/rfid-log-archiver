@@ -12,8 +12,8 @@ The third option is the most efficient and effective option. Hence, the creation
 
 ## Building
 ### Required for building:
-* Windows OS - Used Windows 10
-* C++ Compiler that supports C++ 17 standard - I used Visual Studio 2019
+* Linux OS
+* C++ compiler with C++17 support (filesystem library)
 * CMake
 * 7z Lzma SDK - Download the SDK library from the official site (Link provided below in the building section and included in the 3rdparty directory)
 
@@ -23,11 +23,15 @@ You will need to be comfortable with the command line or terminal to compile and
 
 1. Clone the repository ``git clone https://github.com/A1admin/rfid-log-archiver``
 2. Go to the [7zip](https://www.7-zip.org/sdk.html) website and download the latest version of the sdk or use the SDK from the 3rdparty directory
-3. Extract the SDK and change directory to ``C/Util/Lzma`` (**Note**: Not the **Local C Drive** but the directory that was extracted from the archive)
-4. Open Visual Studio and open the project file found within ``C/Util/Lzma``. There maybe a prompt to convert the project to a newer project file, accept, and make sure the target architecture matches what you're building for. Ex. x86 on x86 systems aND X64 for x64 systems. By default it's x86 and needs to be changed to x64
-5. Change the build target from Debug to Release, build, and exit Visual Studio once complete
-6. Change directory to the root directory for rfid-log-archiver from powershell
-7. Run ```mkdir build; cd build```
-8. Run cmake ```cmake .. -D7Z_ROOT_C=/path/to/library```
-9. Run make ```msbuild /p:Configuration=Release /m:4 rla.vcxproj```
+3. Extract the SDK and change directory to ``[ExtractedRootFolder]/C/Util/Lzma``
+4. Build the 7z library. Run ```Bash
+make -f makefile.gcc
+```
+5. Copy the ``[ExtractedRootFolder]/C/Util/Lzma`` directory somewhere where it is easily referenceable. Ex. /home/[your_username]
+6. Change directory to the root directory of rfid-log-archiver. This is the repository that was cloned
+7. Create build directory and change directories```Bash
+mkdir build; cd build
+```
+8. Build the project ```cmake .. -D7Z_ROOT_C=/path/to/library -DCMAKE_BUILD_TYPE=RELEASE```. Where -D7Z_ROOT_C would be the copied lzma directory /home/[your_username]/[ExtractedRootFolder]/C
+9. Build the executable ```make```
 10. Run rla ```rla help```
