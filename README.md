@@ -24,14 +24,26 @@ You will need to be comfortable with the command line or terminal to compile and
 1. Clone the repository ``git clone https://github.com/A1admin/rfid-log-archiver``
 2. Go to the [7zip](https://www.7-zip.org/sdk.html) website and download the latest version of the sdk or use the SDK from the 3rdparty directory
 3. Extract the SDK and change directory to ``[ExtractedRootFolder]/C/Util/Lzma``
-4. Build the 7z library. Run ```Bash
+4. Build the 7zip library 
+```Bash
 make -f makefile.gcc
 ```
 5. Copy the ``[ExtractedRootFolder]/C/Util/Lzma`` directory somewhere where it is easily referenceable. Ex. /home/[your_username]
 6. Change directory to the root directory of rfid-log-archiver. This is the repository that was cloned
-7. Create build directory and change directories```Bash
+7. Create build directory and change directories
+```Bash
 mkdir build; cd build
 ```
-8. Build the project ```cmake .. -D7Z_ROOT_C=/path/to/library -DCMAKE_BUILD_TYPE=RELEASE```. Where -D7Z_ROOT_C would be the copied lzma directory /home/[your_username]/[ExtractedRootFolder]/C
-9. Build the executable ```make```
-10. Run rla ```rla help```
+8. Build the project 
+```Bash
+cmake .. -D7Z_ROOT_C=/path/to/library -DCMAKE_BUILD_TYPE=RELEASE
+```
+Where -D7Z_ROOT_C would be the copied lzma directory /home/[your_username]/[ExtractedRootFolder]/C  
+9. Build the executable 
+```Bash
+make
+```
+10. Run rla 
+```Bash
+rla help
+```
