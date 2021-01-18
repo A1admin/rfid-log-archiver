@@ -10,6 +10,11 @@ r-la is a program that compresses log files created by the RFID-API web server. 
 The third option is the most efficient and effective option. Hence, the creation of this program.
 
 
+# Note
+Change the target C++ standard from 17 to 11. Will have to add more depdencies like Boost (for filesystem usage). Won't have to change the compiler version. When this was created I was using GCC version 8 which has C++ 11 support. Instead what will have to be done is change the compiler CXX standard flag.
+
+
+
 ## Building
 ### Required for building:
 * Linux OS
